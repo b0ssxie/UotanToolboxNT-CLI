@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "utoolbox": {
+      "type": "local",
+      "command": ["node", ".opencode/mcp/utoolbox-mcp.mjs"],
+      "enabled": true,
+      "environment": {
+        "UTOOLBOX_BIN": "C:/Users/Administrator/Desktop/code/utan-cli/publish/utoolbox-win-x64/utoolbox.exe"
+      }
+    }
+  },
+  "skills": {
+    "paths": [".opencode/skills"]
+  }
+}
