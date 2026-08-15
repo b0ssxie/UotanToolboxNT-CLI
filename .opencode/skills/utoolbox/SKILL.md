@@ -41,6 +41,7 @@ devices
 | 固件分区列表 | `payload_parts` | `payload_parts` file=`C:\fw\payload.bin` |
 | 提取固件分区 | `extract` | `extract` file=... partitions=[`boot`,`system`] |
 | Magisk 修补 | `patch_boot` | `patch_boot` boot=`boot.img` zip=`Magisk.apk` |
+| 从刷机包修补 | `patch_rom` | `patch_rom` rom=`payload.bin` zip=`Magisk.apk` (用 `patch_rom` rom=... `listOnly`=true 查看可修补分区) |
 | 单分区刷入 | `flash` | `flash` partition=`boot` image=`boot-patched.img` |
 | TXT 双包刷机 | `flash_all` | `flash_all` fastboot=`a.txt` fastbootd=`b.txt` |
 | 解锁 Bootloader | `unlock` | `unlock` |

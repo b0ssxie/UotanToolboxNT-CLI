@@ -245,6 +245,22 @@ const tools = [
     },
   },
   {
+    name: "patch_rom",
+    description:
+      "从刷机包（payload/super/zip固件等）提取 boot/init_boot/vendor_boot 分区并自动用 Magisk/GKI/LKM 修补 Root。例: patch_rom <刷机包> zip=<Root包> [part=boot] [output_dir=目录] 或 listOnly=true 只看分区",
+    inputSchema: {
+      type: "object",
+      properties: {
+        rom: { type: "string", description: "刷机包路径（payload/super.img/.ntpi/.nb0/.ozip/.ops/.ofp/含img的zip）" },
+        zip: { type: "string", description: "Magisk.apk 或 KernelSU zip 路径" },
+        part: { type: "string", description: "要修补的分区（默认 boot，可选 init_boot/vendor_boot）" },
+        outputDir: { type: "string", description: "输出目录（可选）" },
+        listOnly: { type: "boolean", description: "只列出可修补分区（true 时 zip/part 可省略）" },
+      },
+      required: ["rom"],
+    },
+  },
+  {
     name: "exec",
     description: "执行 utoolbox 尚未封装的原始命令。例: exec <设备ID> <adb命令>",
     inputSchema: {
@@ -345,6 +361,14 @@ function buildArgs(name, input) {
     case "patch_boot": {
       const a = ["patch-boot", String(input.boot), "--zip", String(input.zip)];
       if (input.output) a.push("-o", String(input.output));
+      return a;
+    }
+    case "patch_rom": {
+      const a = ["patch-rom", String(input.rom)];
+      if (input.zip) a.push("--zip", String(input.zip));
+      if (input.part) a.push("--part", String(input.part));
+      if (input.outputDir) a.push("-o", String(input.outputDir));
+      if (input.listOnly) a.push("--list");
       return a;
     }
     case "exec": return ["exec", String(input.deviceId), String(input.command)];

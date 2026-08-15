@@ -169,6 +169,7 @@ utoolbox ota img2ota C:\fw\images -o C:\fw\update.zip
 | 命令 | 说明 |
 |---|---|
 | `utoolbox patch-boot <boot.img> --zip <Magisk/GKI/LKM包> [-o 输出]` | 用 Magisk / KernelSU 修补 boot 镜像 |
+| `utoolbox patch-rom <刷机包> --zip <Root包> [-o 目录] [--part boot]` | 从刷机包提取 boot 并自动修补 Root |
 
 ### 刷机（需进入 Fastboot 模式）
 

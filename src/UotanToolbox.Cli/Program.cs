@@ -38,6 +38,7 @@ internal static class Program
                 "extract" => await ExtractAsync(args.Skip(1).ToArray()),
                 "payload-parts" => await PayloadPartsAsync(args.Skip(1).ToArray()),
                 "patch-boot" => await PatchBootAsync(args.Skip(1).ToArray()),
+                "patch-rom" => await PatchRomCommands.PatchRomAsync(args.Skip(1).ToArray()),
                 "firmware" => await FirmwareCommands.FirmwareAsync(args.Skip(1).ToArray()),
                 "ota" => await OtaCommands.OtaAsync(args.Skip(1).ToArray()),
                 "flash" => await FlashAsync(args.Skip(1).ToArray()),
@@ -720,6 +721,7 @@ private static int PrintHelp()
 
             Root 修补:
               patch-boot <boot.img> --zip <包> [-o 输出]    用 Magisk/GKI/LKM 修补 boot
+              patch-rom <刷机包> --zip <包> [-o 目录] [--part boot]   从刷机包提取并修补 boot
 
             刷机 (需进入 Fastboot 模式):
               flash <分区> <镜像>          刷入单个分区
