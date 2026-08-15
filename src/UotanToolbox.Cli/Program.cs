@@ -38,6 +38,7 @@ internal static class Program
                 "extract" => await ExtractAsync(args.Skip(1).ToArray()),
                 "payload-parts" => await PayloadPartsAsync(args.Skip(1).ToArray()),
                 "patch-boot" => await PatchBootAsync(args.Skip(1).ToArray()),
+                "firmware" => await FirmwareCommands.FirmwareAsync(args.Skip(1).ToArray()),
                 "flash" => await FlashAsync(args.Skip(1).ToArray()),
                 "unlock" => await UnlockAsync(args.Skip(1).ToArray()),
                 "lock" => await LockAsync(args.Skip(1).ToArray()),
@@ -50,6 +51,12 @@ internal static class Program
                 "sync-ab" => await FlashCommands.FlashAsync(args.Skip(1).Prepend("sync-ab").ToArray()),
                 "advanced-reboot" => await FlashCommands.FlashAsync(args.Skip(1).Prepend("advanced-reboot").ToArray()),
                 "format" => await FormatCommands.FormatAsync(args.Skip(1).ToArray()),
+                "xda" => await SystemCommands.SystemAsync(args.Skip(1).Prepend("xda").ToArray()),
+                "statusbar" => await SystemCommands.SystemAsync(args.Skip(1).Prepend("statusbar").ToArray()),
+                "clock-seconds" => await SystemCommands.SystemAsync(args.Skip(1).Prepend("clock-seconds").ToArray()),
+                "rotation-suggest" => await SystemCommands.SystemAsync(args.Skip(1).Prepend("rotation-suggest").ToArray()),
+                "active-app" => await SystemCommands.SystemAsync(args.Skip(1).Prepend("active-app").ToArray()),
+                "system-version" => await SystemCommands.SystemAsync(args.Skip(1).Prepend("version").ToArray()),
                 "app" => await AppCommands.AppAsync(args.Skip(1).ToArray()),
                 "file" => await FileCommands.FileAsync(args.Skip(1).ToArray()),
                 "display" => await DisplayCommands.DisplayAsync(args.Skip(1).ToArray()),
@@ -684,7 +691,7 @@ internal static class Program
     }
 
 
-    private static int PrintHelp()
+private static int PrintHelp()
     {
         Console.WriteLine("""
             UotanToolbox CLI — Android & OpenHarmony 设备命令行工具箱
@@ -701,6 +708,10 @@ internal static class Program
             固件解包:
               payload-parts <payload.bin>   列出 payload 中的分区
               extract <payload.bin> [-o 目录] [分区名...]   提取分区（不带分区名则全部）
+              firmware detect <文件>        识别固件类型 (super/ntpi/nb0/ozip/ops/ofp)
+              firmware parts <文件>         列出固件分区
+              firmware extract <文件> [-o 目录] [分区...]   提取固件分区
+              firmware extract-url <url> [-o 目录] [分区...] 在线解包 payload
 
             Root 修补:
               patch-boot <boot.img> --zip <包> [-o 输出]    用 Magisk/GKI/LKM 修补 boot
@@ -727,6 +738,14 @@ internal static class Program
               format extract-part <分区名> [-o 目录] [--mode ...]  提取分区镜像
               format extract-vpart <分区名> [-o 目录] [--mode ...] 提取逻辑分区
               format full-backup [-o 目录] [--mode ...]            全量备份
+
+            系统杂项:
+              xda [--off]                  破解 X（网络检测）
+              statusbar <项,...>           状态栏图标黑名单
+              clock-seconds [--off]        状态栏显示秒
+              rotation-suggest [--off]     旋转建议
+              active-app <辅助应用>         激活辅助应用
+              system-version               检查版本
 
             通用:
               adb <adb参数...>              直接执行 adb 命令

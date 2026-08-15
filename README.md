@@ -139,6 +139,10 @@ dotnet publish src\UotanToolbox.Cli\UotanToolbox.Cli.csproj -c Release -r win-x6
 |---|---|
 | `utoolbox payload-parts <payload.bin>` | 列出 payload 中的分区 |
 | `utoolbox extract <payload.bin> [-o 目录] [分区名...]` | 提取分区（不带分区名则全部） |
+| `utoolbox firmware detect <文件>` | 识别固件类型（super/ntpi/nb0/ozip/ops/ofp） |
+| `utoolbox firmware parts <文件>` | 列出固件分区 |
+| `utoolbox firmware extract <文件> [-o 目录] [分区...]` | 提取固件分区 |
+| `utoolbox firmware extract-url <url> [-o 目录] [分区...]` | 在线解包 payload URL |
 
 ### Root 修补
 
@@ -284,6 +288,17 @@ utoolbox flash-all --fastboot C:\fw\fastboot.txt --fastbootd C:\fw\fastbootd.txt
 | `utoolbox wireless pair <ip:端口> <配对码>` | 无线配对 |
 | `utoolbox wireless connect <ip:端口>` | 连接设备 |
 | `utoolbox wireless tcpip <端口>` | 开启无线调试（默认 5555） |
+
+### 系统杂项
+
+| 命令 | 说明 |
+|---|---|
+| `utoolbox xda [--off]` | 破解 X（配置国内网络检测 / 时间 / NTP） |
+| `utoolbox statusbar <项,...>` | 状态栏图标黑名单（如 wifi,bluetooth,nfc） |
+| `utoolbox clock-seconds [--off]` | 状态栏显示秒 |
+| `utoolbox rotation-suggest [--off]` | 旋转建议 |
+| `utoolbox active-app <辅助应用>` | 激活辅助应用（Shizuku/Dhizuku/Brevent/IceBox/Greenify/StopApp/PermissionDog） |
+| `utoolbox system-version` | 检查版本 |
 
 ### 通用
 

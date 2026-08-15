@@ -7,6 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FirmwareKit.Lp" Version="1.0.0" />
+    <PackageReference Include="FirmwareKit.Nb0" Version="1.0.0" />
+    <PackageReference Include="FirmwareKit.NTPi" Version="1.0.0" />
+    <PackageReference Include="FirmwareKit.Oppo" Version="0.1.0" />
+    <PackageReference Include="FirmwareKit.Sparse" Version="1.1.0" />
     <PackageReference Include="Google.Protobuf" Version="3.33.5" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="SharpCompress" Version="1.0.0" />
