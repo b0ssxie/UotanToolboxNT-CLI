@@ -321,6 +321,28 @@ utoolbox flash-all --fastboot C:\fw\fastboot.txt --fastbootd C:\fw\fastbootd.txt
 | `utoolbox active-app <辅助应用>` | 激活辅助应用（Shizuku/Dhizuku/Brevent/IceBox/Greenify/StopApp/PermissionDog） |
 | `utoolbox system-version` | 检查版本 |
 
+### 设备工具
+
+| 命令 | 说明 |
+|---|---|
+| `utoolbox logcat [-l] [-o 文件] [标签]` | 实时查看日志（Ctrl+C 停止；-l 只打印现有） |
+| `utoolbox bugreport -o <文件>` | 生成 bugreport 诊断包 |
+| `utoolbox forward add <本地> <设备>` | 端口转发 |
+| `utoolbox reverse add <设备> <本地>` | 反向转发 |
+| `utoolbox diagnose` | 设备诊断（电池/存储/网络/进程） |
+
+### 厂商线刷
+
+| 命令 | 说明 |
+|---|---|
+| `utoolbox xiaomi <线刷包.tgz> [--keep-data\|--lock]` | 小米官方线刷包（解压 + flash_all*.bat） |
+| `utoolbox heimdall detect\|print-pit\|flash ...` | 三星刷机（需 [Heimdall](https://gitlab.com/BenjaminDobell/Heimdall)） |
+| `utoolbox spflash <scatter.txt> [--mode ...]` | MTK 刷机（需 [SP Flash Tool](https://spflashtool.com)） |
+| `utoolbox edl printgpt\|qfil ...` | 高通 EDL 9008（需 `pip install edl`，[bkerler/edl](https://github.com/bkerler/edl)） |
+
+> 厂商线刷工具依赖外部二进制（heimdall / flash_tool / edl），需自行下载并加入 PATH 或放入 `Bin\` 目录。
+> 三星需 Zadig 装 WinUSB 驱动；MTK 需 VCOM 驱动；EDL 需匹配机型的 firehose loader。
+
 ### 通用
 
 | 命令 | 说明 |

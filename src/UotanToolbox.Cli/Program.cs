@@ -41,6 +41,15 @@ internal static class Program
                 "patch-rom" => await PatchRomCommands.PatchRomAsync(args.Skip(1).ToArray()),
                 "firmware" => await FirmwareCommands.FirmwareAsync(args.Skip(1).ToArray()),
                 "ota" => await OtaCommands.OtaAsync(args.Skip(1).ToArray()),
+                "logcat" => await DeviceToolCommands.DeviceToolAsync(args.Skip(1).Prepend("logcat").ToArray()),
+                "bugreport" => await DeviceToolCommands.DeviceToolAsync(args.Skip(1).Prepend("bugreport").ToArray()),
+                "forward" => await DeviceToolCommands.DeviceToolAsync(args.Skip(1).Prepend("forward").ToArray()),
+                "reverse" => await DeviceToolCommands.DeviceToolAsync(args.Skip(1).Prepend("reverse").ToArray()),
+                "diagnose" => await DeviceToolCommands.DeviceToolAsync(args.Skip(1).Prepend("diagnose").ToArray()),
+                "xiaomi" => await FlashingCommands.FlashAsync(args.Skip(1).Prepend("xiaomi").ToArray()),
+                "heimdall" => await FlashingCommands.FlashAsync(args.Skip(1).Prepend("heimdall").ToArray()),
+                "spflash" => await FlashingCommands.FlashAsync(args.Skip(1).Prepend("spflash").ToArray()),
+                "edl" => await FlashingCommands.FlashAsync(args.Skip(1).Prepend("edl").ToArray()),
                 "flash" => await FlashAsync(args.Skip(1).ToArray()),
                 "unlock" => await UnlockAsync(args.Skip(1).ToArray()),
                 "lock" => await LockAsync(args.Skip(1).ToArray()),
@@ -753,6 +762,18 @@ private static int PrintHelp()
               rotation-suggest [--off]     旋转建议
               active-app <辅助应用>         激活辅助应用
               system-version               检查版本
+
+            设备工具:
+              logcat [-l] [-o 文件] [标签]   实时/查看日志
+              bugreport -o <文件>           生成 bugreport
+              forward / reverse [add|list|remove]   端口转发
+              diagnose                       设备诊断
+
+            厂商线刷:
+              xiaomi <线刷包> [--keep-data|--lock]   小米线刷
+              heimdall detect|print-pit|flash ...   三星刷机
+              spflash <scatter> [选项]              MTK 刷机
+              edl printgpt|qfil ...                高通 EDL 9008
 
             通用:
               adb <adb参数...>              直接执行 adb 命令
