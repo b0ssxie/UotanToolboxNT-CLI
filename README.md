@@ -144,6 +144,26 @@ dotnet publish src\UotanToolbox.Cli\UotanToolbox.Cli.csproj -c Release -r win-x6
 | `utoolbox firmware extract <文件> [-o 目录] [分区...]` | 提取固件分区 |
 | `utoolbox firmware extract-url <url> [-o 目录] [分区...]` | 在线解包 payload URL |
 
+### 线刷卡刷互转
+
+| 命令 | 说明 |
+|---|---|
+| `utoolbox ota ota2img <update.zip> [-o 目录]` | 卡刷包 → 线刷镜像（还原 .dat/.dat.br 为 .img + 生成 flash_all.bat） |
+| `utoolbox ota img2ota <img目录> -o <update.zip>` | 线刷镜像 → 卡刷包（生成 .dat + updater-script） |
+
+示例：
+```
+# 卡刷包转线刷包
+utoolbox ota ota2img C:\fw\update.zip -o C:\fw\fastboot
+
+# 线刷包转卡刷包（system/vendor 等转 .dat，boot/recovery 直放）
+utoolbox ota img2ota C:\fw\images -o C:\fw\update.zip
+```
+
+> 卡刷包核心是 `xxx.new.dat + xxx.transfer.list`（分块压缩镜像）再加 updater-script 打包。
+> `ota2img` 用 sdat2img 算法把 .dat 还原成完整 .img（支持 new/zero/erase/stash/free，自动解压 .dat.br）；
+> `img2ota` 用 img2sdat 算法把镜像转回 .dat 并生成卡刷脚本。
+
 ### Root 修补
 
 | 命令 | 说明 |

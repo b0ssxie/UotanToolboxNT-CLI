@@ -39,6 +39,7 @@ internal static class Program
                 "payload-parts" => await PayloadPartsAsync(args.Skip(1).ToArray()),
                 "patch-boot" => await PatchBootAsync(args.Skip(1).ToArray()),
                 "firmware" => await FirmwareCommands.FirmwareAsync(args.Skip(1).ToArray()),
+                "ota" => await OtaCommands.OtaAsync(args.Skip(1).ToArray()),
                 "flash" => await FlashAsync(args.Skip(1).ToArray()),
                 "unlock" => await UnlockAsync(args.Skip(1).ToArray()),
                 "lock" => await LockAsync(args.Skip(1).ToArray()),
@@ -712,6 +713,10 @@ private static int PrintHelp()
               firmware parts <文件>         列出固件分区
               firmware extract <文件> [-o 目录] [分区...]   提取固件分区
               firmware extract-url <url> [-o 目录] [分区...] 在线解包 payload
+
+            线刷卡刷互转:
+              ota ota2img <update.zip> [-o 目录]   卡刷包 → 线刷镜像（还原 .dat 为 .img + 生成脚本）
+              ota img2ota <img目录> -o <update.zip>  线刷镜像 → 卡刷包
 
             Root 修补:
               patch-boot <boot.img> --zip <包> [-o 输出]    用 Magisk/GKI/LKM 修补 boot
