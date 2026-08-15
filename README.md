@@ -372,3 +372,29 @@ src/
 - 刷机、解锁、格式化、分区操作有风险，请先备份数据并确认理解后再执行
 - 部分功能依赖对应设备状态（如解锁需 Fastboot、QCN 需 901D/9091 端口）
 - 反馈问题请提交 [Issue](https://github.com/b0ssxie/UotanToolboxNT-CLI/issues)
+
+## 已知限制
+
+### 为什么不支持 APatch 修补
+
+APatch（[bmax121/APatch](https://github.com/bmax121/APatch)）是目前主流 root 方案之一，
+但其修补方式与 Magisk / KernelSU 有根本差异，无法在本 CLI 中实现：
+
+| | Magisk / KernelSU | APatch |
+|---|---|---|
+| 修补目标 | boot.img（往 ramdisk 加文件） | Linux 内核本身（静态补丁注入 kpimg） |
+| 工具链 | magiskboot（可在 Windows 运行） | KernelPatch 工具（仅 ARM64 Linux native 二进制） |
+| 平台限制 | 跨平台 | 仅 ARM64，内核 3.18-6.12 |
+| 分发形式 | 有开源的 PC 端补丁逻辑 | 官方仅有 Android APK，补丁在 App 内完成 |
+
+- APatch 的 `apd`（Rust daemon）运行在设备 root shell 中，负责运行时管理，不做主机端修补
+- 其 boot 修补依赖 KernelPatch 的编译工具链，是 ARM64 Linux 二进制，无法在 Windows 上执行
+- 需要在自己的 ARM64 设备上通过 APatch App 选择 boot.img 完成修补
+
+因此本 CLI 的 Root 修补（`patch-boot` / `patch-rom`）支持 Magisk 和 KernelSU（GKI/LKM），
+这两个方案已覆盖绝大多数刷机 root 需求。
+
+### 其他限制
+
+- 驱动安装、USB3 修复等部分 GUI 专属功能未纳入 CLI（需 Windows 驱动外挂工具）
+- `firmware extract-url` 依赖目标固件 URL 可公开访问且无防盗链
