@@ -155,6 +155,28 @@ utoolbox flash-all --fastboot C:\fw\fastboot.txt --fastbootd C:\fw\fastbootd.txt
 dotnet build UotanToolbox.Cli.slnx
 ```
 
+## opencode 集成（MCP + Skill）
+
+本项目已配置 opencode 集成，让 AI 能直接操作设备：
+
+- **MCP server**：`.opencode/mcp/utoolbox-mcp.mjs`，把 utoolbox 命令暴露为 19 个 MCP 工具（devices / info / reboot / flash / app / file / scrcpy 等）
+- **Skill**：`.opencode/skills/utoolbox/SKILL.md`，指导 AI 何时用、怎么用这些工具
+- **配置**：`opencode.json` 注册 MCP server 与 skill 路径
+
+**启用方法**：
+1. 确认 `publish\utoolbox-win-x64\utoolbox.exe` 存在（或设置 `UTOOLBOX_BIN` 环境变量指向你的 utoolbox）
+2. 重启 opencode 使配置生效
+3. 在对话中描述需求即可，如"看看有哪些设备"、"帮我重启到 recovery"、"安装这个 apk"
+
+**修改 UTOOLBOX_BIN**：编辑 `opencode.json` 中 `mcp.utoolbox.environment.UTOOLBOX_BIN` 指向实际路径。
+
+**独立测试 MCP server**（无需 opencode）：
+```powershell
+$init = '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"t","version":"1"}}}'
+$call = '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"devices","arguments":{}}}'
+"$init`n$call" | node .opencode\mcp\utoolbox-mcp.mjs
+```
+
 发布：
 ```
 dotnet publish src\UotanToolbox.Cli\UotanToolbox.Cli.csproj -c Release -r win-x64 -o publish\utoolbox-win-x64
