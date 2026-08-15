@@ -169,7 +169,14 @@ utoolbox ota img2ota C:\fw\images -o C:\fw\update.zip
 | 命令 | 说明 |
 |---|---|
 | `utoolbox patch-boot <boot.img> --zip <Magisk/GKI/LKM包> [-o 输出]` | 用 Magisk / KernelSU 修补 boot 镜像 |
+| `utoolbox patch-boot <boot.img> --auto magisk\|kernelsu [--mirror]` | **自动下载最新 Root 并修补** |
 | `utoolbox patch-rom <刷机包> --zip <Root包> [-o 目录] [--part boot]` | 从刷机包提取 boot 并自动修补 Root |
+| `utoolbox patch-boot --list-mirrors` | 查看可用 GitHub 镜像加速前缀 |
+
+**自动下载（`--auto`）**：从 GitHub 自动获取最新 Magisk 或 KernelSU，无需本地准备 Root 包。
+- `--auto magisk`：下载最新 Magisk APK 修补
+- `--auto kernelsu [--kernel <版本>]`：下载匹配内核版本的 KernelSU 模块（如 `--kernel android15-6.6`），自动准备 ksuinit
+- `--mirror https://ghfast.top/`：GitHub 镜像加速下载（国内网络建议使用），API 仍走直连以保证稳定
 
 ### 刷机（需进入 Fastboot 模式）
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -343,27 +344,45 @@ internal static class Program
         return 0;
     }
 
-    private static async Task<int> PatchBootAsync(string[] args)
+private static async Task<int> PatchBootAsync(string[] args)
     {
-        // 用法: patch-boot <boot.img> --zip <Magisk/GKI/LKM zip> [-o 输出文件]
+        // 用法: patch-boot <boot.img> --zip <Magisk/GKI/LKM 包> [-o 输出文件]
+        //        patch-boot <boot.img> --auto magisk|kernelsu [--mirror 镜像] [-o 输出文件]
+
+        if (args.Contains("--list-mirrors"))
+        {
+            Console.WriteLine("可用 GitHub 镜像加速（用于 --auto 自动下载）:");
+            string[] names = ["直连", "ghfast.top", "gh-proxy.com", "ghproxy.net", "mirror.ghproxy.com"];
+            for (int i = 0; i < names.Length; i++)
+                Console.WriteLine($"  {i}: {names[i]}  前缀: {RootDownloadHelper.Mirrors[i] ?? "(无)"}");
+            return 0;
+        }
+
         if (args.Length < 2)
         {
-            Console.WriteLine("用法: utoolbox patch-boot <boot.img> --zip <Magisk/GKI/LKM 包> [-o 输出文件]");
+            Console.WriteLine("""
+                用法: utoolbox patch-boot <boot.img> --zip <Magisk/GKI/LKM 包> [-o 输出文件]
+                     utoolbox patch-boot <boot.img> --auto magisk|kernelsu [--mirror <镜像>] [-o 输出文件]
+                     utoolbox patch-boot --list-mirrors
+                """);
             return 1;
         }
-        string bootFile = args[0];
+
+string bootFile = args[0];
         string? zipFile = null;
         string? output = null;
+        string? auto = null;
+        string mirror = "";
+        string? kernel = null;
         for (int i = 1; i < args.Length; i++)
         {
             switch (args[i])
             {
-                case "--zip" or "-z":
-                    if (i + 1 < args.Length) zipFile = args[++i];
-                    break;
-                case "--out" or "-o":
-                    if (i + 1 < args.Length) output = args[++i];
-                    break;
+                case "--zip" or "-z" when i + 1 < args.Length: zipFile = args[++i]; break;
+                case "--auto" when i + 1 < args.Length: auto = args[++i]; break;
+                case "--mirror" when i + 1 < args.Length: mirror = args[++i]; break;
+                case "--kernel" when i + 1 < args.Length: kernel = args[++i]; break;
+                case "--out" or "-o" when i + 1 < args.Length: output = args[++i]; break;
             }
         }
         if (!File.Exists(bootFile))
@@ -371,9 +390,17 @@ internal static class Program
             Console.Error.WriteLine($"boot 文件不存在: {bootFile}");
             return 1;
         }
+
+        // --auto 模式：自动下载 Root 包
+        if (auto != null)
+        {
+            zipFile = await AutoDownloadRootAsync(auto, mirror, kernel);
+            if (zipFile == null) return 1;
+        }
+
         if (zipFile == null || !File.Exists(zipFile))
         {
-            Console.Error.WriteLine($"缺少有效的 --zip 参数（Magisk/GKI/LKM 包）");
+            Console.Error.WriteLine($"缺少有效的 --zip（或 --auto）参数（Magisk/GKI/LKM 包）");
             return 1;
         }
 
@@ -422,6 +449,129 @@ internal static class Program
             Console.WriteLine($"修补完成: {newboot}");
         }
         return 0;
+    }
+
+    /// <summary>
+    /// 自动下载最新 Magisk / KernelSU 到本地，返回补丁包路径。
+    /// </summary>
+    internal static async Task<string?> AutoDownloadRootAsync(string type, string mirror, string? kernel = null)
+    {
+        type = type.ToLowerInvariant();
+        if (type is not ("magisk" or "kernelsu" or "ksu" or "kernelsu-lkm"))
+        {
+            Console.Error.WriteLine($"未知 Root 类型: {type}（可选 magisk / kernelsu）");
+            return null;
+        }
+
+        string targetDir = Path.Combine(Path.GetTempPath(), $"utoolbox_root_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(targetDir);
+
+        try
+        {
+            if (type == "magisk")
+            {
+                Console.WriteLine($"{(mirror.Length > 0 ? $"[镜像: {mirror}] " : "")}正在获取 Magisk 最新版...");
+                var (version, assets) = await RootDownloadHelper.GetMagiskLatestAsync(mirror);
+                var apk = assets.FirstOrDefault(a => a.Name.StartsWith("Magisk-v"));
+                apk ??= assets.FirstOrDefault();
+                if (apk == null)
+                {
+                    Console.Error.WriteLine("Magisk release 中未找到 APK。");
+                    return null;
+                }
+                Console.WriteLine($"Magisk {version}: 下载 {apk.Name} ({(apk.Size / 1024 / 1024):0.#} MB)...");
+                string dest = Path.Combine(targetDir, apk.Name);
+                await RootDownloadHelper.DownloadAsync(apk.DownloadUrl, dest, mirror,
+                    (read, total) => { if (total > 0) Console.Write($"\r  进度 {read * 100 / total}%"); });
+                Console.WriteLine();
+                Console.WriteLine($"下载完成: {dest}");
+                return dest;
+            }
+            else
+            {
+                Console.WriteLine($"{(mirror.Length > 0 ? $"[镜像: {mirror}] " : "")}正在获取 KernelSU 最新版...");
+                var (version, assets) = await RootDownloadHelper.GetKernelSuLatestAsync(mirror);
+                Console.WriteLine($"KernelSU {version}。可用内核模块:");
+                int idx = 0;
+                var koAssets = assets.Where(a => a.Name.EndsWith(".ko", StringComparison.OrdinalIgnoreCase)).ToList();
+                foreach (var a in koAssets.Take(20))
+                    Console.WriteLine($"  [{idx++}] {a.Name}");
+                if (koAssets.Count == 0)
+                {
+                    Console.Error.WriteLine("KernelSU release 中未找到 .ko。");
+                    return null;
+                }
+                // 用 --kernel 精确匹配（如 android15-6.6），否则提示
+                RootDownloadHelper.ReleaseAsset ko;
+                if (!string.IsNullOrEmpty(kernel))
+                {
+                    var match = koAssets.FirstOrDefault(a => a.Name.Contains(kernel, StringComparison.OrdinalIgnoreCase));
+                    if (match == null)
+                    {
+                        Console.Error.WriteLine($"未找到匹配 {kernel} 的模块。可用:");
+                        foreach (var a in koAssets)
+                            Console.WriteLine($"  {a.Name}");
+                        return null;
+                    }
+                    ko = match;
+                }
+                else
+                {
+                    Console.Write("输入内核版本序号（如 5），或直接回车用第一个: ");
+                    string? input = Console.ReadLine()?.Trim();
+                    int sel = int.TryParse(input, out int v) && v >= 0 && v < koAssets.Count ? v : 0;
+                    ko = koAssets[sel];
+                }
+                Console.WriteLine($"选择: {ko.Name}");
+                Console.WriteLine($"下载 {ko.Name}...");
+                string koPath = Path.Combine(targetDir, "kernelsu.ko");
+                await RootDownloadHelper.DownloadAsync(ko.DownloadUrl, koPath, mirror,
+                    (read, total) => { if (total > 0) Console.Write($"\r  进度 {read * 100 / total}%"); });
+                Console.WriteLine();
+
+                // 构造 PatchDetect 能识别的 zip（含 kernelsu.ko）
+                string zipPath = Path.Combine(Path.GetTempPath(), $"kernelsu_{Guid.NewGuid():N}.zip");
+                using (var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+                {
+                    zip.CreateEntryFromFile(koPath, "kernelsu.ko");
+                }
+                Console.WriteLine($"打包完成: {zipPath}");
+
+                // 准备 LKM 修补所需的 ksuinit（存为 Bin/ksud/arm64-v8a/init）
+                var ksuinit = assets.FirstOrDefault(a => a.Name.Equals("ksuinit", StringComparison.OrdinalIgnoreCase));
+                if (ksuinit != null)
+                {
+                    string ksudDir = Path.Combine(Global.bin_path, "ksud", "arm64-v8a");
+                    Directory.CreateDirectory(ksudDir);
+                    string initPath = Path.Combine(ksudDir, "init");
+                    if (!File.Exists(initPath))
+                    {
+                        Console.WriteLine("下载 ksuinit → Bin/ksud/arm64-v8a/init ...");
+                        await RootDownloadHelper.DownloadAsync(ksuinit.DownloadUrl, initPath, mirror,
+                            (read, total) => { if (total > 0) Console.Write($"\r  进度 {read * 100 / total}%"); });
+                        Console.WriteLine();
+                        Console.WriteLine("ksuinit 就绪。");
+                    }
+                    else
+                    {
+                        Console.WriteLine("ksuinit 已存在，跳过下载。");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("警告: KernelSU release 中未找到 ksuinit，LKM 修补可能需要 Bin/ksud/arm64-v8a/init。");
+                }
+
+                return zipPath;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"自动下载失败: {ex.Message}");
+            // 下载失败时清理
+            try { Directory.Delete(targetDir, true); } catch { }
+            return null;
+        }
     }
 
     // ---- 刷机相关命令（Fastboot）----
@@ -730,7 +880,10 @@ private static int PrintHelp()
 
             Root 修补:
               patch-boot <boot.img> --zip <包> [-o 输出]    用 Magisk/GKI/LKM 修补 boot
-              patch-rom <刷机包> --zip <包> [-o 目录] [--part boot]   从刷机包提取并修补 boot
+              patch-boot <boot.img> --auto magisk|kernelsu [--mirror]   自动下载最新 Root 并修补
+              patch-rom <刷机包> --zip <包> | --auto ...    从刷机包提取并修补 boot
+              patch-boot --list-mirrors     查看可用 GitHub 镜像加速
+              （--auto 可加 --mirror https://ghfast.top/ 加速下载）
 
             刷机 (需进入 Fastboot 模式):
               flash <分区> <镜像>          刷入单个分区

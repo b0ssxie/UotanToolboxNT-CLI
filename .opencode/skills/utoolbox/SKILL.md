@@ -40,8 +40,8 @@ devices
 | 无线连接 | `wireless` | `wireless` subcommand=`connect 192.168.1.5:5555` |
 | 固件分区列表 | `payload_parts` | `payload_parts` file=`C:\fw\payload.bin` |
 | 提取固件分区 | `extract` | `extract` file=... partitions=[`boot`,`system`] |
-| Magisk 修补 | `patch_boot` | `patch_boot` boot=`boot.img` zip=`Magisk.apk` |
-| 从刷机包修补 | `patch_rom` | `patch_rom` rom=`payload.bin` zip=`Magisk.apk` (用 `patch_rom` rom=... `listOnly`=true 查看可修补分区) |
+| Magisk 修补 | `patch_boot` | `patch_boot` boot=`boot.img` zip=`Magisk.apk`；或 `patch_boot` boot=`boot.img` auto=`magisk` mirror=`https://ghfast.top/` 自动下载 |
+| 从刷机包修补 | `patch_rom` | `patch_rom` rom=`payload.bin` zip=`Magisk.apk`；或 auto=`magisk` 自动下载；用 `listOnly`=true 查看可修补分区 |
 | 单分区刷入 | `flash` | `flash` partition=`boot` image=`boot-patched.img` |
 | TXT 双包刷机 | `flash_all` | `flash_all` fastboot=`a.txt` fastbootd=`b.txt` |
 | 解锁 Bootloader | `unlock` | `unlock` |

@@ -233,12 +233,15 @@ const tools = [
   {
     name: "patch_boot",
     description:
-      "用 Magisk/GKI/LKM 修补 boot 镜像。例: patch_boot <boot.img> zip=<Magisk包路径> [output=<输出文件>]",
+      "用 Magisk/GKI/LKM 修补 boot 镜像。可用本地包 (zip=<路径>) 或自动下载最新版 (auto=magisk|kernelsu, 可选 mirror=镜像 加速)。例: patch_boot <boot.img> zip=<Magisk包>  或  patch_boot <boot.img> auto=magisk mirror=https://ghfast.top/",
     inputSchema: {
       type: "object",
       properties: {
         boot: { type: "string", description: "boot.img 路径" },
-        zip: { type: "string", description: "Magisk/GKI/LKM 包路径" },
+        zip: { type: "string", description: "Magisk/GKI/LKM 包路径（与 auto 二选一）" },
+        auto: { type: "string", enum: ["magisk", "kernelsu", "ksu", "kernelsu-lkm"], description: "自动从 GitHub 下载最新 Root 方案" },
+        mirror: { type: "string", description: "GitHub 镜像加速前缀（可选，如 https://ghfast.top/）" },
+        part: { type: "string", description: "分区（可选，配合 auto）" },
         output: { type: "string", description: "输出文件路径（可选）" },
       },
       required: ["boot", "zip"],
@@ -247,12 +250,15 @@ const tools = [
   {
     name: "patch_rom",
     description:
-      "从刷机包（payload/super/zip固件等）提取 boot/init_boot/vendor_boot 分区并自动用 Magisk/GKI/LKM 修补 Root。例: patch_rom <刷机包> zip=<Root包> [part=boot] [output_dir=目录] 或 listOnly=true 只看分区",
+      "从刷机包（payload/super/zip固件等）提取 boot/init_boot/vendor_boot 分区并自动用 Magisk/GKI/LKM 修补 Root。可用本地包 zip= 或 auto=magisk|kernelsu 自动下载（可选 mirror=镜像）。例: patch_rom <刷机包> zip=<Root包> 或  patch_rom <刷机包> auto=magisk mirror=https://ghfast.top/",
     inputSchema: {
       type: "object",
       properties: {
         rom: { type: "string", description: "刷机包路径（payload/super.img/.ntpi/.nb0/.ozip/.ops/.ofp/含img的zip）" },
-        zip: { type: "string", description: "Magisk.apk 或 KernelSU zip 路径" },
+        zip: { type: "string", description: "Magisk.apk 或 KernelSU zip 路径（与 auto 二选一）" },
+        auto: { type: "string", enum: ["magisk", "kernelsu", "ksu", "kernelsu-lkm"], description: "自动从 GitHub 下载最新 Root" },
+        mirror: { type: "string", description: "GitHub 镜像加速前缀（可选）" },
+        kernel: { type: "string", description: "KernelSU 内核版本筛选（可选，如 android15-6.6）" },
         part: { type: "string", description: "要修补的分区（默认 boot，可选 init_boot/vendor_boot）" },
         outputDir: { type: "string", description: "输出目录（可选）" },
         listOnly: { type: "boolean", description: "只列出可修补分区（true 时 zip/part 可省略）" },
@@ -359,13 +365,20 @@ function buildArgs(name, input) {
       return a;
     }
     case "patch_boot": {
-      const a = ["patch-boot", String(input.boot), "--zip", String(input.zip)];
+      const a = ["patch-boot", String(input.boot)];
+      if (input.auto) a.push("--auto", String(input.auto));
+      else if (input.zip) a.push("--zip", String(input.zip));
+      if (input.mirror) a.push("--mirror", String(input.mirror));
+      if (input.part) a.push("--kernel", String(input.part));
       if (input.output) a.push("-o", String(input.output));
       return a;
     }
     case "patch_rom": {
       const a = ["patch-rom", String(input.rom)];
-      if (input.zip) a.push("--zip", String(input.zip));
+      if (input.auto) a.push("--auto", String(input.auto));
+      else if (input.zip) a.push("--zip", String(input.zip));
+      if (input.mirror) a.push("--mirror", String(input.mirror));
+      if (input.kernel) a.push("--kernel", String(input.kernel));
       if (input.part) a.push("--part", String(input.part));
       if (input.outputDir) a.push("-o", String(input.outputDir));
       if (input.listOnly) a.push("--list");

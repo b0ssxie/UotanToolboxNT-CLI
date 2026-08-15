@@ -21,10 +21,14 @@ internal static class PatchRomCommands
             Console.WriteLine("""
                 从刷机包提取并修补 Root:
                   utoolbox patch-rom <刷机包> --zip <Root包> [-o 输出目录] [--part boot|init_boot|vendor_boot] [--list]
+                  utoolbox patch-rom <刷机包> --auto magisk|kernelsu [--mirror <镜像>] [--kernel <版本>] [-o 输出目录]
 
                 参数:
                   <刷机包>   固件文件：payload / super.img / .ntpi / .nb0 / .ozip / .ops / .ofp / 线刷zip
                   --zip       Magisk.apk 或 KernelSU zip（自动识别 Magisk / GKI / LKM）
+                  --auto      自动从 GitHub 下载最新 Magisk / KernelSU
+                  --mirror    GitHub 镜像加速（如 https://ghfast.top/；patch-boot --list-mirrors 查看）
+                  --kernel    KernelSU 内核版本筛选（如 android15-6.6）
                   --part      要修补的分区（默认自动选择 boot；可用 --list 查看可用分区）
                   --list      只列出固件中可修补的分区，不执行
                   -o          输出目录（默认当前目录）
@@ -42,12 +46,18 @@ internal static class PatchRomCommands
         string? zipFile = null;
         string outputDir = Directory.GetCurrentDirectory();
         string? part = null;
+        string? auto = null;
+        string mirror = "";
+        string? kernel = null;
         bool listOnly = args.Contains("--list");
         for (int i = 0; i < args.Length; i++)
         {
             switch (args[i])
             {
                 case "--zip" or "-z" when i + 1 < args.Length: zipFile = args[++i]; break;
+                case "--auto" when i + 1 < args.Length: auto = args[++i]; break;
+                case "--mirror" when i + 1 < args.Length: mirror = args[++i]; break;
+                case "--kernel" when i + 1 < args.Length: kernel = args[++i]; break;
                 case "--part" when i + 1 < args.Length: part = args[++i]; break;
                 case "-o" when i + 1 < args.Length: outputDir = args[++i]; break;
             }
@@ -122,6 +132,16 @@ internal static class PatchRomCommands
         }
 
         // 4. 修补
+        // --auto：自动下载 Root 包
+        if (auto != null)
+        {
+            zipFile = await UotanToolbox.Cli.Program.AutoDownloadRootAsync(auto, mirror, kernel);
+            if (zipFile == null)
+            {
+                Directory.Delete(work, true);
+                return 1;
+            }
+        }
         if (zipFile == null)
         {
             Console.Error.WriteLine("缺少 --zip Root 包（Magisk.apk 或 KernelSU zip）。");
