@@ -1,0 +1,87 @@
+# 打 tag (v*) 时自动构建并发布 GitHub Release
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $v = $tag.TrimStart('v')
+          Write-Output "VERSION=$v" >> $env:GITHUB_OUTPUT
+          Write-Output "TAG=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish (single-file, self-contained)
+        run: |
+          dotnet publish src/UotanToolbox.Cli/UotanToolbox.Cli.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -o publish/utoolbox
+
+      # 从 UotanToolboxNT.Binary 仓库获取二进制资源（adb/fastboot/magiskboot/7z 等）
+      - name: Clone binary resources
+        run: |
+          git clone --depth 1 https://github.com/Uotan-Dev/UotanToolboxNT.Binary.git binary
+
+      - name: Copy binary resources
+        shell: pwsh
+        run: |
+          $src = "binary/Windows"
+          $dst = "publish/utoolbox"
+          if (-not (Test-Path $src)) { Write-Error "Binary repo has no 'Windows' folder"; exit 1 }
+          Copy-Item -Path "$src/*" -Destination $dst -Recurse -Force
+          # 清理调试符号与配置文件，减小体积
+          Get-ChildItem -Path $dst -Include '*.pdb','*.config' -Recurse -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+          Write-Output "Binary resources copied."
+
+      - name: Sanity check
+        shell: pwsh
+        run: |
+          if (Test-Path "publish/utoolbox/utoolbox.exe") {
+            & "publish/utoolbox/utoolbox.exe" help 2>&1 | Select-Object -First 5
+          } else {
+            Get-ChildItem "publish/utoolbox" -Recurse -Filter "utoolbox*" | Select-Object FullName
+          }
+
+      - name: Package zip
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          Push-Location "publish/utoolbox"
+          try { Compress-Archive -Path * -DestinationPath "../utoolbox-win-x64-$version.zip" -Force } catch { Write-Error $_ }
+          Pop-Location
+          Get-Item "publish/utoolbox-win-x64-$version.zip" | Select-Object Name, Length
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "UotanToolbox CLI ${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## UotanToolbox CLI ${{ steps.version.outputs.VERSION }}
+
+            Windows x64 命令行版，内置全部二进制资源（adb / fastboot / magiskboot / scrcpy 等），开箱即用。
+
+            使用说明见 [README](https://github.com/b0ssxie/UotanToolboxNT-CLI#readme)。
+          files: |
+            publish/utoolbox-win-x64-${{ steps.version.outputs.VERSION }}.zip
+          draft: false
+          prerelease: false

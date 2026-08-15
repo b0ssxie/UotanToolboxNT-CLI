@@ -1,0 +1,36 @@
+# 每次 push 到 cli 分支时构建验证（不发布 Release）
+name: Build
+
+on:
+  push:
+    branches: [cli]
+    paths:
+      - 'src/**'
+      - '*.slnx'
+      - '.github/workflows/build.yml'
+  pull_request:
+    branches: [cli]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore UotanToolbox.Cli.slnx
+
+      - name: Build (Debug)
+        run: dotnet build UotanToolbox.Cli.slnx -c Debug --no-restore
+
+      - name: Build (Release)
+        run: dotnet build UotanToolbox.Cli.slnx -c Release --no-restore
+
+      - name: Smoke test (version)
+        run: dotnet run --project src/UotanToolbox.Cli -c Release -- help
