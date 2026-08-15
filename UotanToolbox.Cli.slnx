@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/UotanToolbox.Cli/UotanToolbox.Cli.csproj" />
+    <Project Path="src/UotanToolbox.Core/UotanToolbox.Core.csproj" />
+  </Folder>
+</Solution>
