@@ -406,8 +406,8 @@ async function handleMessage(line) {
   }
   const { id, method, params } = msg;
 
-  // 通知类消息无 id，不回复
-  if (!id) return;
+  // 通知类消息无 id，不回复（注意: 请求 id 可能为 0，必须返回，不能按真值判断）
+  if (id === undefined || id === null) return;
 
   if (method === "initialize") {
     return send({
