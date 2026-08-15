@@ -179,6 +179,35 @@ utoolbox flash-all --fastboot C:\fw\fastboot.txt --fastbootd C:\fw\fastbootd.txt
 其余行每行一个分区名（自动拼接 `images/分区.img`），`分区 路径` 形式可指定镜像，
 `分区 create 分区` 标记创建逻辑分区。
 
+### 刷机恢复工具
+
+| 命令 | 说明 |
+|---|---|
+| `utoolbox install-magisk <apk> [--twrp\|--sideload]` | 刷入 Magisk / APK 到设备 |
+| `utoolbox disable-autorecovery [--twrp\|--sideload]` | 关闭自动还原 Recovery |
+| `utoolbox sync-ab [--twrp\|--sideload]` | 同步 A/B 分区 |
+| `utoolbox advanced-reboot <模式>` | 高级重启（twrp-sideload / sideload / autodloader / zygote / safe-mode / muc / factory / admin） |
+
+> 设备处于 Android 系统时 `install-magisk` 会推送到 `/sdcard/magisk.apk` 手动安装；
+> Recovery 模式下用 `--twrp`（TWRP 安装）或 `--sideload`（ADB Sideload）自动安装。
+
+### 格式化与备份
+
+| 命令 | 说明 |
+|---|---|
+| `utoolbox format <分区名> [--fs ext4\|f2fs\|fat32\|exfat\|ntfs]` | 格式化分区（Recovery） |
+| `utoolbox format format-fastboot <分区名>` | Fastboot 方式擦除分区 |
+| `utoolbox format wipe-data` | 清 data（`recovery --wipe_data`） |
+| `utoolbox format twrp-wipe-data` | 清 data（`twrp format data`） |
+| `utoolbox format extract-part <分区名> [-o 目录] [--mode ...]` | 提取物理分区镜像 |
+| `utoolbox format extract-vpart <分区名> [-o 目录] [--mode ...]` | 提取逻辑分区（mapper）镜像 |
+| `utoolbox format full-backup [-o 目录] [--mode ...]` | 全量备份（所有分区 + 生成刷机脚本） |
+
+`--mode` 可选：`recovery`（默认）/ `root`（Android + su）/ `debug`（Android + adb root）。
+
+`full-backup` 会遍历 9 个磁盘分区表，逐个备份分区镜像（跳过 userdata），
+备份特殊分区（spl / preloader 等），并生成 `flashall_fastboot.txt` 刷机清单。
+
 ### 应用管理
 
 | 命令 | 说明 |

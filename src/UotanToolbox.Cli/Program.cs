@@ -45,6 +45,11 @@ internal static class Program
                 "set-active" => await SetActiveAsync(args.Skip(1).ToArray()),
                 "wipe-super" => await WipeSuperAsync(),
                 "flash-all" => await FlashAllAsync(args.Skip(1).ToArray()),
+                "install-magisk" => await FlashCommands.FlashAsync(args.Skip(1).Prepend("install-magisk").ToArray()),
+                "disable-autorecovery" => await FlashCommands.FlashAsync(args.Skip(1).Prepend("disable-autorecovery").ToArray()),
+                "sync-ab" => await FlashCommands.FlashAsync(args.Skip(1).Prepend("sync-ab").ToArray()),
+                "advanced-reboot" => await FlashCommands.FlashAsync(args.Skip(1).Prepend("advanced-reboot").ToArray()),
+                "format" => await FormatCommands.FormatAsync(args.Skip(1).ToArray()),
                 "app" => await AppCommands.AppAsync(args.Skip(1).ToArray()),
                 "file" => await FileCommands.FileAsync(args.Skip(1).ToArray()),
                 "display" => await DisplayCommands.DisplayAsync(args.Skip(1).ToArray()),
@@ -708,6 +713,20 @@ internal static class Program
               unlock [--file <文件>] [--code <解锁码>]   解锁 Bootloader
               lock                         上锁 Bootloader
               flash-all --fastboot <txt> [--fastbootd <txt>] [选项]   TXT 双包刷机
+
+            刷机恢复工具:
+              install-magisk <apk> [--twrp|--sideload]  刷入 Magisk
+              disable-autorecovery [--twrp|--sideload]  关闭自动还原 Recovery
+              sync-ab [--twrp|--sideload]               同步 A/B 分区
+              advanced-reboot <模式>                    高级重启 (twrp-sideload/sideload/autodloader/zygote/safe-mode/muc/factory/admin)
+
+            格式化与备份:
+              format <分区名> [--fs ext4|f2fs|fat32|exfat|ntfs]   格式化分区（Recovery）
+              format format-fastboot <分区名>                     Fastboot 擦除
+              format wipe-data / twrp-wipe-data                    清 data
+              format extract-part <分区名> [-o 目录] [--mode ...]  提取分区镜像
+              format extract-vpart <分区名> [-o 目录] [--mode ...] 提取逻辑分区
+              format full-backup [-o 目录] [--mode ...]            全量备份
 
             通用:
               adb <adb参数...>              直接执行 adb 命令
